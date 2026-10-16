@@ -3,16 +3,25 @@ import { MinusIcon, PlusIcon } from '@radix-ui/react-icons';
 import { rxjsStore } from './store/rxjsStore';
 import { useEffect, useState } from 'react';
 
-import { from, fromEvent, map } from 'rxjs';
+import {
+  from,
+  fromEvent,
+  map,
+  distinctUntilChanged,
+  debounceTime,
+  take,
+} from 'rxjs';
 
 function CountButtons() {
   const [counter, setCounter] = useState(0);
 
-  const handleMinus = () => {
+  const handleMinus = (e) => {
     rxjsStore.setStoreCounter(counter - 1);
+    e.currentTarget.blur();
   };
-  const handlePlus = () => {
+  const handlePlus = (e) => {
     rxjsStore.setStoreCounter(counter + 1);
+    e.currentTarget.blur();
   };
 
   useEffect(() => {
@@ -22,11 +31,13 @@ function CountButtons() {
   }, []);
 
   useEffect(() => {
-    let stream$ = fromEvent(window, 'keyup')
+    let stream$ = fromEvent(document, 'keyup')
       .pipe(
         map((x) => {
           if (x.code == 'Space') handlePlus();
         }),
+        debounceTime(300),
+        take(1),
       )
       .subscribe();
     return () => stream$.unsubscribe();
